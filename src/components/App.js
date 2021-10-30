@@ -193,7 +193,8 @@ function App() {
       });
   }
 
-  const handleRegister = (email, password) => {
+  const handleRegister = (email, password, submitButtonTitleRef) => {
+    submitButtonTitleRef.current.textContent = "Зарегистрироваться...";
     Auth.register(email, password)
       .then((res) => {
         if(res) {
@@ -204,10 +205,14 @@ function App() {
       })
       .catch((err) => {
         console.log(err.status);
+      })
+      .finally(() => {
+        submitButtonTitleRef.current.textContent = "Зарегистрироваться";
       });
   }
 
-  const handleLogin = (email, password) => {
+  const handleLogin = (email, password, submitButtonRef) => {
+    submitButtonRef.current.firstElementChild.textContent = "Войти...";
     Auth.authorize(email, password)
       .then((data) => {
         if(data) {
@@ -225,11 +230,15 @@ function App() {
           } 
         } else {
           setFailurePopup(true);
+          submitButtonDisabling(submitButtonRef);
         }
       })
       .catch((err) => {
         console.log(err);
       })
+      .finally(() => {
+        submitButtonRef.current.firstElementChild.textContent = "Войти";
+      });
   }
 
   const tokenCheck = () => {
