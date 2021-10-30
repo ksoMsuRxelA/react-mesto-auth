@@ -1,6 +1,7 @@
 export const BASE_URL = 'https://auth.nomoreparties.co';
 
 export const register = (email, password) => {
+
   return fetch(`${BASE_URL}/signup`, {
     method: 'POST',
     headers: {
@@ -9,46 +10,42 @@ export const register = (email, password) => {
     body: JSON.stringify({ email, password })
   })
   .then((response) => {
-    if(response.status === 400) {
-      return Promise.reject("Некорректно заполнено одно из полей...");
+    if(response.ok) {
+      return response.json();
     }
-    return response.json();
+    return Promise.reject(response);
   })
   .catch((err) => {
-    console.log(`Ошибка при создании нового пользователя: ${err}.`);
-  })
+    if(err.status === 400) {
+      console.log('400 - Некорректно заполнено одно из полей...');
+    }
+  });
 }
 
 export const authorize = (email, password) => {
   return fetch(`${BASE_URL}/signin`, {
     method: 'POST',
-    header: {
+    headers: {
       "Content-Type": "application/json",
-
     },
     body: JSON.stringify({ email, password })
   })
   .then((response) => {
-    if(response.status === 400) {
-      return Promise.reject("Не передано одно из полей...");
-    } else if(response.status === 401) {
-      return Promise.reject(`Пользователь с идентификатором ${email} не найден...`);
+    if(response.ok) {
+      return response.json();
     }
-    return response.json();
-  })
-  .then((data) => {
-    if(data.jwt) {
-      localStorage.setItem('jwt', data.jwt);
-      return data;
-    }
-    return Promise.reject("Ошибка при получении пользовательских данных и токена доступа...");
+    return Promise.reject(response);
   })
   .catch((err) => {
-    console.log(`Ошибка при попытке авторизации: ${err}`);
-  })
+    if(err.status === 400) {
+      console.log("400 - Не передано одно из полей...");
+    } else if(err.status === 401) {
+      console.log(`401 - Пользователь с идентификатором ${email} не найден...`);
+    }
+  });
 }
 
-const getContent = (token) => {
+export const getContent = (token) => {
   return fetch(`${BASE_URL}/users/me`, {
     method: 'GET',
     headers: {
@@ -57,14 +54,16 @@ const getContent = (token) => {
     }
   })
   .then((response) => {
-    if(response.status === 400) {
-      return Promise.reject("Токен не передан или передан не в том формате...");
-    } else if(response.status === 401) {
-      return Promise.reject("Переданный токен некорректен...");
+    if(response.ok) {
+      return response.json();
     }
-    return response.json(); //response.json() is just a data
+    return Promise.reject(response);
   })
   .catch((err) => {
-    console.log(`Ошибка при попытке проверки токена авторизации: ${err}`);
-  })
+    if(err.status === 400) {
+      console.log("400 - Токен не передан или передан не в том формате...");
+    } else if(err.status === 401) {
+      console.log("401 - Переданный токен некорректен...");
+    }
+  });
 }

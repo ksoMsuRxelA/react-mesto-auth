@@ -76,5 +76,6 @@
 @import url('./blocks/popup/__sign-in-link/popup__sign-in-link.css');
 @import url('./blocks/popup/__cite/popup__cite.css');
 @import url('./blocks/popup/__sign/popup__sign.css');
+@import url('./blocks/popup/__new-line/popup__new-line.css');
 
 @import url('./blocks/spinner/spinner.css');

@@ -1,15 +1,61 @@
-const Login = (props) => {
+import { useState } from 'react';
+import { useHistory } from 'react-router-dom';
+import * as Auth from '../utils/Auth';
+
+const Login = ({ onLogin,  }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const history = useHistory();
+
+  function handleEmailChange(evt) {
+    setEmail(evt.target.value);
+  }
+
+  function handlePasswordChange(evt) {
+    setPassword(evt.target.value);
+  }
+
+  function handleSubmit(evt) {
+    evt.preventDefault();
+    if(!email || !password) {
+      return;
+    }
+    Auth.authorize(email, password)
+    .then((data) => {
+        if(data) {
+          if(data.token) {
+            Auth.getContent(data.token)
+            .then((res) => {
+              onLogin(data.token, res.data);
+              setEmail('');
+              setPassword('');
+              history.push('/');
+            })
+            .catch((err) => {
+              console.log(err);
+            });
+          }
+        } else {
+          setPassword('');
+          onLogin('', data); //так я реализовал работу данной функции.
+        }
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+  }
+
   return (
     <section className="popup popup_type_login popup_opened">
       <div className="popup__container popup__container_theme_black">
-        <form className="popup__edit-form" name="personal_info" noValidate>
+        <form className="popup__edit-form" name="personal_info" onSubmit={handleSubmit}>
           <h2 className="popup__title popup__title_theme_black">Вход</h2>
           <fieldset className="popup__info">
-            <input id="name-input" type="email" placeholder="Email" className="popup__input popup__input_theme_black popup__input-name" name="email" />
+            <input id="email-input" type="email" value={email} onChange={handleEmailChange} placeholder="Email" className="popup__input popup__input_theme_black popup__input-name" name="email" required/>
             {/* <span className="popup__error-element name-input-error"></span> */}
-            <input id="role-input" type="password" placeholder="Пароль" className="popup__input popup__input_theme_black popup__input-role" name="password" required />
+            <input id="password-input" type="password" value={password} onChange={handlePasswordChange} placeholder="Пароль" className="popup__input popup__input_theme_black popup__input-role" name="password" required />
             {/* <span className="popup__error-element role-input-error"></span> */}
-            <button type="submit" aria-label="Кнопка Сохранить" className="popup__save-button popup__save-button_theme_white" disabled><span className="popup__save-button-title">Войти</span></button>
+            <button type="submit" aria-label="Кнопка Сохранить" className="popup__save-button popup__save-button_theme_white"><span className="popup__save-button-title">Войти</span></button>
           </fieldset>
         </form>
       </div>

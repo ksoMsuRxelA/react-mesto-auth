@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Switch, Route } from 'react-router-dom';
+import { Switch, Route, useHistory } from 'react-router-dom';
 import Header from './Header';
 import Register from './Register';
 import Login from './Login';
@@ -12,6 +12,7 @@ import EditAvatarPopup from './EditAvatarPopup';
 import AddPlacePopup from './AddPlacePopup';
 import CardDelete from './CardDelete';
 import { api } from '../utils/Api';
+import * as Auth from '../utils/Auth';
 import { CurrentUserContext } from '../contexts/CurrentUserContext';
 import ProtectedRoute from './ProtectedRoute';
 
@@ -25,6 +26,21 @@ function App() {
   const [currentUser, setCurrentUser] = useState({name: '', about: '', avatar: '', _id: ''});
   const [isLoading, setIsLoading] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [successPopup, setSuccessPopup] = useState(false);
+  const [failurePopup, setFailurePopup] = useState(false);
+  const [userData, setUserData] = useState({});
+
+  const history = useHistory();
+
+  useEffect(() => {
+    tokenCheck();
+  }, []);
+
+  useEffect(() => {
+    if(loggedIn === true) {
+      history.push('/');
+    }
+  }, [loggedIn, history]);
 
   useEffect(() => {
     api.getUserInfo()
@@ -47,6 +63,8 @@ function App() {
     setIsAddPlacePopupOpen(false);
     setIsDeleteCardPopupOpen(false);
     setSelectedCard({});
+    setSuccessPopup(false);
+    setFailurePopup(false);
   }
 
    const openEditAvatarPopup = () => {
@@ -175,37 +193,80 @@ function App() {
       });
   }
 
+  const handleRegister = (res) => {
+    if(res) {
+      setSuccessPopup(true);
+    } else {
+      setFailurePopup(true);
+    }
+  }
+
+  const handleLogin = (token, data) => {
+    if(data) {
+      localStorage.setItem('token', token);
+      setUserData(data);
+      setLoggedIn(true);
+    } else {
+      setFailurePopup(true);
+    }
+  }
+
+  const tokenCheck = () => {
+    const jwtToken = localStorage.getItem('token');
+
+    if(jwtToken) {
+      Auth.getContent(jwtToken)
+        .then((res) => {
+          if(res) {
+            setUserData(res.data);
+            setLoggedIn(true); 
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        })
+    }
+  }
+
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    setUserData({});
+    history.push('/sign-in');
+  }
+
   return (
     <Switch>
-      <Route path="/signin">
+      <Route path="/sign-up">
         <div className="wrapper">
           <div className="page page_type_register">
-            <Header linkTitle={"Регистрация"} email={""}/>
-            <Login />
+            <Header linkTitle={"Войти"} userData={{}} onSignOut={() => {}} />
+            <Register onRegister={handleRegister} />
             <Footer filler="&copy; 2021 Mesto Russia"/>
-            <InfoToolTip />
+            <InfoToolTip isRegister={true} tipType={"success"} isOpen={successPopup} onClose={closeAllPopups} />
+            <InfoToolTip isRegister={true} tipType={"failure"} isOpen={failurePopup} onClose={closeAllPopups} />
           </div>
         </div>
       </Route>
 
-      <Route path="/signup">
-      <div className="wrapper">
+      <Route path="/sign-in">
+        <div className="wrapper">
           <div className="page page_type_login">
-            <Header linkTitle={"Войти"} email={""}/>
-            <Register />
+            <Header linkTitle={"Регистрация"} userData={{}} onSignOut={() => {}} />
+            <Login onLogin={handleLogin} />
             <Footer filler="&copy; 2021 Mesto Russia"/>
+            <InfoToolTip isRegister={false} tipType={"failure"} isOpen={failurePopup} onClose={closeAllPopups} />
           </div>
         </div>
       </Route>
 
       <ProtectedRoute
-        path="*"
+        path="/"
         loggedIn={loggedIn}
       >
         <CurrentUserContext.Provider value={currentUser}>
           <div className="wrapper">
             <div className="page">
-              <Header linkTitle={"Выйти"} email={"email@mail.com"}/>
+              <Header linkTitle={""} userData={userData} onSignOut={handleSignOut} />
               <Main 
                 onEditAvatar={openEditAvatarPopup} 
                 onEditProfile={openEditProfilePopup}
@@ -214,7 +275,6 @@ function App() {
                 handleCardClick={setSelectedCard}
                 cards={cards}
                 onCardLike={handleCardLike}
-                // onCardDelete={handleCardDelete}
                 isLoading={isLoading}
                 onCardDelButtonClick={setCardForDelete}
               />
@@ -241,3 +301,4 @@ function App() {
 }
 
 export default App;
+
