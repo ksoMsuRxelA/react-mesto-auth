@@ -193,22 +193,43 @@ function App() {
       });
   }
 
-  const handleRegister = (res) => {
-    if(res) {
-      setSuccessPopup(true);
-    } else {
-      setFailurePopup(true);
-    }
+  const handleRegister = (email, password) => {
+    Auth.register(email, password)
+      .then((res) => {
+        if(res) {
+          setSuccessPopup(true);
+        } else {
+          setFailurePopup(true);
+        }
+      })
+      .catch((err) => {
+        console.log(err.status);
+      });
   }
 
-  const handleLogin = (token, data) => {
-    if(data) {
-      localStorage.setItem('token', token);
-      setUserData(data);
-      setLoggedIn(true);
-    } else {
-      setFailurePopup(true);
-    }
+  const handleLogin = (email, password) => {
+    Auth.authorize(email, password)
+      .then((data) => {
+        if(data) {
+          if(data.token) {
+            localStorage.setItem('token', data.token);
+            Auth.getContent(localStorage.getItem('token'))
+              .then((res) => {
+                setUserData(res.data);
+                setLoggedIn(true);
+                history.push('/');
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          } 
+        } else {
+          setFailurePopup(true);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      })
   }
 
   const tokenCheck = () => {

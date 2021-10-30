@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import * as Auth from '../utils/Auth';
 
 const Register = ({ onRegister }) => {
   const [email, setEmail] = useState('');
@@ -16,10 +15,7 @@ const Register = ({ onRegister }) => {
 
   function handleSubmit(evt) {
     evt.preventDefault();
-    Auth.register(email, password)
-      .then((res) => {
-        onRegister(res);
-      });
+    onRegister(email, password);
   }
 
   return (

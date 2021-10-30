@@ -1,11 +1,8 @@
 import { useState } from 'react';
-import { useHistory } from 'react-router-dom';
-import * as Auth from '../utils/Auth';
 
 const Login = ({ onLogin,  }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const history = useHistory();
 
   function handleEmailChange(evt) {
     setEmail(evt.target.value);
@@ -20,29 +17,9 @@ const Login = ({ onLogin,  }) => {
     if(!email || !password) {
       return;
     }
-    Auth.authorize(email, password)
-    .then((data) => {
-        if(data) {
-          if(data.token) {
-            Auth.getContent(data.token)
-            .then((res) => {
-              onLogin(data.token, res.data);
-              setEmail('');
-              setPassword('');
-              history.push('/');
-            })
-            .catch((err) => {
-              console.log(err);
-            });
-          }
-        } else {
-          setPassword('');
-          onLogin('', data); //так я реализовал работу данной функции.
-        }
-    })
-    .catch((err) => {
-      console.log(err);
-    })
+    onLogin(email, password);
+    setEmail('');
+    setPassword('');
   }
 
   return (
