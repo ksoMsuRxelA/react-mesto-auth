@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import FormValidator from '../utils/FormValidator';
 
-const Login = ({ onLogin,  }) => {
+const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const submitButtonRef = useRef();

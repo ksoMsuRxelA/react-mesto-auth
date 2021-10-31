@@ -1,9 +1,8 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import FormValidator from '../utils/FormValidator';
 
 const PopupWithForm = ({name, isOpen, title, children, ariaLabel, buttonTitle, onClose, onSubmit, submitButtonRef, handleInputsReset}) => {
   const className = `popup popup_type_${name} ${isOpen ? 'popup_opened' : ''}`;
-
   const objSelectors = {
     formSelector: '.popup__edit-form',
     inputSelector: '.popup__input',
@@ -14,16 +13,29 @@ const PopupWithForm = ({name, isOpen, title, children, ariaLabel, buttonTitle, o
   };
 
   const currentValidatingForm = useRef(null);
-  const formValidate = new FormValidator(objSelectors, currentValidatingForm.current);
 
-  if(isOpen) {
+  useEffect(() => { //полностью согласен с Вами Геннадий, исправляюсь
+    const formValidate = new FormValidator(objSelectors, currentValidatingForm.current);
     formValidate.enableValidation();
+  }, []);
+
+
+  function clearFormFromErrors() { //реализовал данный метод ввиду того что не могу воспользоваться публичным методом - clearFormFromErrorMessages, так как объект соответствующего класса находится в другм лексичесокм окружении (области видимости), а именно в колбэке useEffect. 
+    submitButtonRef.current.classList.add(objSelectors['inactiveButtonClass']);
+    submitButtonRef.current.setAttribute('disable', true);
+    Array.from(currentValidatingForm.current.querySelectorAll(objSelectors['inputSelector']))
+      .forEach((inputElement) => {
+        const errorElement = currentValidatingForm.current.querySelector(`.${inputElement.id}-error`);
+        inputElement.classList.remove(objSelectors['inputErrorClass']);
+        errorElement.textContent = '';
+        errorElement.classList.remove(objSelectors['errorClass']);
+      })
   }
 
   function handleClosePopup() {
     onClose();
+    clearFormFromErrors();
     handleInputsReset();
-    formValidate.clearFormFromErrorMessages();
     if(name === 'delete') {
       submitButtonRef.current.removeAttribute('disabled');
       submitButtonRef.current.classList.remove('popup__save-button_disabled');

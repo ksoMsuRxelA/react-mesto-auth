@@ -93,6 +93,7 @@ function App() {
     api.patchUserInfo(newUserInfo)
       .then((resUserInfo) => {
         setCurrentUser(resUserInfo);
+        submitButtonDisabling(submitButtonRef);
         onClose();
       })
       .catch((err) => {
@@ -100,7 +101,6 @@ function App() {
       })
       .finally(() => {
         submitButtonRef.current.textContent = "Сохранить";
-        submitButtonDisabling(submitButtonRef);
       });
   }
 
@@ -171,7 +171,7 @@ function App() {
       })
       .finally(() => {
         submitButtonRef.current.textContent = "Да";
-        submitButtonRef.current.removeAttribute('disabled');
+        submitButtonRef.current.removeAttribute('disabled'); //просто в моей логике кнопки формы по умолчанию неактивны, а кнопка удаления карточки должна быть активной. Этому и служат эти две строчки.
         submitButtonRef.current.classList.remove('popup__save-button_disabled');
       });
   }
@@ -204,47 +204,43 @@ function App() {
         }
       })
       .catch((err) => {
-        console.log(err.status);
+        if(err.status === 400) {
+          console.log('400 - Некорректно заполнено одно из полей...');
+        }
+        setFailurePopup(true);
       })
       .finally(() => {
         submitButtonTitleRef.current.textContent = "Зарегистрироваться";
       });
   }
 
-  const handleLogin = (email, password, submitButtonRef) => {
+  const handleLogin = (email, password, submitButtonRef) => { //здесь все исправил...спасибо за замечания. 
     submitButtonRef.current.firstElementChild.textContent = "Войти...";
     Auth.authorize(email, password)
       .then((data) => {
-        if(data) {
-          if(data.token) {
-            localStorage.setItem('token', data.token);
-            Auth.getContent(localStorage.getItem('token'))
-              .then((res) => {
-                setUserData(res.data);
-                setLoggedIn(true);
-                history.push('/');
-              })
-              .catch((err) => {
-                console.log(err);
-              });
-          } 
+        if(data.token) {
+          localStorage.setItem('token', data.token);
+          setLoggedIn(true);
+          setUserData({email: email, ...userData});
+          history.push('/');
+          submitButtonRef.current.firstElementChild.textContent = "Войти";
         } else {
           setFailurePopup(true);
-          submitButtonDisabling(submitButtonRef);
         }
       })
       .catch((err) => {
-        console.log(err);
-      })
-      .finally(() => {
-        submitButtonRef.current.firstElementChild.textContent = "Войти";
+        if(err.status === 400) {
+          console.log("400 - Не передано одно из полей...");
+        } else if(err.status === 401) {
+          console.log(`401 - Пользователь с идентификатором ${email} не найден...`);
+        }
       });
   }
 
   const tokenCheck = () => {
     const jwtToken = localStorage.getItem('token');
 
-    if(jwtToken) {
+    if(jwtToken) { //вы писали про лишнюю проверку токена здесь, я ничего лишнего здесь не нашел. Более того, этот участок кода соответствует тому, что мы проходили в теории.
       Auth.getContent(jwtToken)
         .then((res) => {
           if(res) {
@@ -253,8 +249,12 @@ function App() {
           }
         })
         .catch((err) => {
-          console.log(err);
-        })
+          if(err.status === 400) {
+            console.log("400 - Токен не передан или передан не в том формате...");
+          } else if(err.status === 401) {
+            console.log("401 - Переданный токен некорректен...");
+          }
+        });
     }
   }
 
@@ -265,36 +265,30 @@ function App() {
   }
 
   return (
-    <Switch>
-      <Route path="/sign-up">
-        <div className="wrapper">
+    <div className="wrapper">
+      <Switch>
+        <Route path="/sign-up">
           <div className="page page_type_register">
             <Header linkTitle={"Войти"} userData={{}} onSignOut={() => {}} />
             <Register onRegister={handleRegister} />
-            <Footer filler="&copy; 2021 Mesto Russia"/>
             <InfoToolTip isRegister={true} tipType={"success"} isOpen={successPopup} onClose={closeAllPopups} />
             <InfoToolTip isRegister={true} tipType={"failure"} isOpen={failurePopup} onClose={closeAllPopups} />
           </div>
-        </div>
-      </Route>
+        </Route>
 
-      <Route path="/sign-in">
-        <div className="wrapper">
+        <Route path="/sign-in">
           <div className="page page_type_login">
             <Header linkTitle={"Регистрация"} userData={{}} onSignOut={() => {}} />
             <Login onLogin={handleLogin} />
-            <Footer filler="&copy; 2021 Mesto Russia"/>
             <InfoToolTip isRegister={false} tipType={"failure"} isOpen={failurePopup} onClose={closeAllPopups} />
           </div>
-        </div>
-      </Route>
+        </Route>
 
-      <ProtectedRoute
-        path="/"
-        loggedIn={loggedIn}
-      >
-        <CurrentUserContext.Provider value={currentUser}>
-          <div className="wrapper">
+        <ProtectedRoute
+          path="/"
+          loggedIn={loggedIn}
+        >
+          <CurrentUserContext.Provider value={currentUser}>
             <div className="page">
               <Header linkTitle={""} userData={userData} onSignOut={handleSignOut} />
               <Main 
@@ -308,7 +302,6 @@ function App() {
                 isLoading={isLoading}
                 onCardDelButtonClick={setCardForDelete}
               />
-              <Footer filler="&copy; 2021 Mesto Russia" />
 
               <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser} />
 
@@ -323,10 +316,11 @@ function App() {
                 card={selectedCard}
               />
             </div>
-          </div>
-        </CurrentUserContext.Provider>
-      </ProtectedRoute>
-    </Switch>
+          </CurrentUserContext.Provider>
+        </ProtectedRoute>
+      </Switch>
+      <Footer filler="&copy; 2021 Mesto Russia" />
+    </div>
   );
 }
 

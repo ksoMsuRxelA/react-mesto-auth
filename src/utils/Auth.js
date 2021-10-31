@@ -1,5 +1,12 @@
 export const BASE_URL = 'https://auth.nomoreparties.co';
 
+function checkResponse(res) {
+  if(res.ok) {
+    return res.json();
+  }
+  return Promise.reject(res.status);
+}
+
 export const register = (email, password) => {
 
   return fetch(`${BASE_URL}/signup`, {
@@ -9,17 +16,7 @@ export const register = (email, password) => {
     },
     body: JSON.stringify({ email, password })
   })
-  .then((response) => {
-    if(response.ok) {
-      return response.json();
-    }
-    return Promise.reject(response);
-  })
-  .catch((err) => {
-    if(err.status === 400) {
-      console.log('400 - Некорректно заполнено одно из полей...');
-    }
-  });
+  .then(checkResponse);
 }
 
 export const authorize = (email, password) => {
@@ -30,19 +27,7 @@ export const authorize = (email, password) => {
     },
     body: JSON.stringify({ email, password })
   })
-  .then((response) => {
-    if(response.ok) {
-      return response.json();
-    }
-    return Promise.reject(response);
-  })
-  .catch((err) => {
-    if(err.status === 400) {
-      console.log("400 - Не передано одно из полей...");
-    } else if(err.status === 401) {
-      console.log(`401 - Пользователь с идентификатором ${email} не найден...`);
-    }
-  });
+  .then(checkResponse);
 }
 
 export const getContent = (token) => {
@@ -53,17 +38,5 @@ export const getContent = (token) => {
       'Authorization': `Bearer ${token}`,
     }
   })
-  .then((response) => {
-    if(response.ok) {
-      return response.json();
-    }
-    return Promise.reject(response);
-  })
-  .catch((err) => {
-    if(err.status === 400) {
-      console.log("400 - Токен не передан или передан не в том формате...");
-    } else if(err.status === 401) {
-      console.log("401 - Переданный токен некорректен...");
-    }
-  });
+  .then(checkResponse);
 }
