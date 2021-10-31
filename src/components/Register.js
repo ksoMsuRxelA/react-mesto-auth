@@ -34,7 +34,6 @@ const Register = ({ onRegister }) => {
 
   function handleSubmit(evt) {
     evt.preventDefault();
-    console.log(submitButtonTitleRef);
     onRegister(email, password, submitButtonTitleRef);
     setEmail('');
     setPassword('');

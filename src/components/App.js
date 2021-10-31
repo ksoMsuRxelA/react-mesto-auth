@@ -218,15 +218,11 @@ function App() {
     submitButtonRef.current.firstElementChild.textContent = "Войти...";
     Auth.authorize(email, password)
       .then((data) => {
-        if(data.token) {
-          localStorage.setItem('token', data.token);
-          setLoggedIn(true);
-          setUserData({email: email, ...userData});
-          history.push('/');
-          submitButtonRef.current.firstElementChild.textContent = "Войти";
-        } else {
-          setFailurePopup(true);
-        }
+        localStorage.setItem('token', data.token);
+        setLoggedIn(true);
+        setUserData({email: email, ...userData});
+        history.push('/');
+        submitButtonRef.current.firstElementChild.textContent = "Войти";
       })
       .catch((err) => {
         if(err.status === 400) {
@@ -234,6 +230,7 @@ function App() {
         } else if(err.status === 401) {
           console.log(`401 - Пользователь с идентификатором ${email} не найден...`);
         }
+        setFailurePopup(true);
       });
   }
 
@@ -261,6 +258,7 @@ function App() {
   const handleSignOut = () => {
     localStorage.removeItem('token');
     setUserData({});
+    setFailurePopup(false);
     history.push('/sign-in');
   }
 
